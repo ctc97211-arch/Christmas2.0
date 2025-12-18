@@ -133,25 +133,29 @@
         let lastVideoTime = -1;
 
         async function init() {
-            setupScene();
-            setupLighting();       
-            createProceduralAssets(); 
-            createStar();          
-            createMainTree();      
-            createNebulaDust();    
-            
-            document.getElementById('file-input').addEventListener('change', handleUpload);
+    setupScene();
+    setupLighting();       
+    createProceduralAssets(); 
+    createStar();          
+    createMainTree();      
+    createNebulaDust();    
+    
+    // --- 关键修改：直接开始动画循环，不等待 AI ---
+    animate(); 
+    document.getElementById('file-input').addEventListener('change', handleUpload);
 
-            try {
-                await setupAI();
-                await setupCameraStream(); // Make this async to ensure readiness
-            } catch(e) { 
-                console.error("Initialization Error:", e); 
-                document.querySelector('.glow-text').innerText = "CAMERA ERROR: " + e.message;
-            }
-
-            animate();
-        }
+    // AI 加载放在后面，失败了也不影响星云显示
+    try {
+        await setupAI();
+        await setupCameraStream();
+        // 如果成功了，才隐藏“等待”提示
+    } catch(e) { 
+        console.error("AI Error:", e); 
+        document.getElementById('gesture-display').innerText = "MOUSE MODE (Camera Failed)";
+        // 即使失败，1秒后也强行移除加载层
+        setTimeout(hideLoader, 1000);
+    }
+}
 
         // --- SCENE & POST-PROCESSING ---
         function setupScene() {
@@ -680,4 +684,5 @@
         init();
     </script>
 </body>
+
 </html>
